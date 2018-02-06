@@ -8,18 +8,33 @@ import java.util.Scanner;
 
 public class Main {
 
+    private static Scanner scanner;
+
+    private static int readInt(int min, int max) {
+        while (true) {
+            try {
+                int menuPosition = Integer.parseInt(scanner.nextLine());
+                if (menuPosition >= min && menuPosition <= max) {
+                    return menuPosition;
+                }
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+            System.out.println("Musisz podać liczbę od " + min + " do " + max + ".");
+        }
+    }
+
     public static void main(String[] args) throws IOException {
-        Scanner sc = new Scanner(System.in);
+        scanner = new Scanner(System.in);
 
         OkHttpClient client = new OkHttpClient();
         Request request;
         Response response;
 
         System.out.println("Wprowadź identyfikator osoby:");
-        int personId = sc.nextInt();
+        int personId = readInt(1, 80);
 
         request = new Request.Builder()
-                //.url("http://httpbin.org/ip")
                 .url("https://swapi.co/api/people/" + personId)
                 .build();
 
@@ -27,32 +42,25 @@ public class Main {
 
         ObjectMapper objectMapper = new ObjectMapper();
 
-        People person = null;
 
         if (response.code() >= 200 && response.code() < 300) {
-            //System.out.println(response.body().string());
-            //System.out.println(response.code());
-            //System.out.println(response.message());
-            //Ip ip = objectMapper.readValue(response.body().string(), Ip.class);
-            //System.out.println(ip.getOrigin());
-            person = objectMapper.readValue(response.body().string(), People.class);
+            People person = objectMapper.readValue(response.body().string(), People.class);
             System.out.println("size: " + person.getFilms().size());
-        } else {
-            System.out.println(response.message());
-        }
 
-        if (person != null) {
             System.out.println("Wprowadź identyfikator filmu od 1 do " + person.getFilms().size() + ":");
-            int filmIndex = sc.nextInt();
+            int filmIndex = readInt(1, person.getFilms().size());
             Request filmRequest = new Request.Builder()
-                    .url(person.getFilms().get(filmIndex-1))
+                    .url(person.getFilms().get(filmIndex - 1))
                     .build();
 
-            Response filmResponse = client.newCall(filmRequest).execute();
+            response = client.newCall(filmRequest).execute();
 
-            Film film = objectMapper.readValue(filmResponse.body().string(), Film.class);
+            Film film = objectMapper.readValue(response.body().string(), Film.class);
 
             System.out.println(film.getTitle());
+
+        } else {
+            System.out.println(response.message());
         }
 
     }
